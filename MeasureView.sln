@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeasureView", "MeasureView\MeasureView.vcxproj", "{914D3DAC-BA00-42B7-B666-AAEF16BA507B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BFDCEC05-B8AA-3754-9196-BBA06BF4818F} = {BFDCEC05-B8AA-3754-9196-BBA06BF4818F}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glview_widget", "MeasureView\glview_widget\glview_widget.vcxproj", "{BFDCEC05-B8AA-3754-9196-BBA06BF4818F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{914D3DAC-BA00-42B7-B666-AAEF16BA507B}.Debug|x64.ActiveCfg = Debug|x64
+		{914D3DAC-BA00-42B7-B666-AAEF16BA507B}.Debug|x64.Build.0 = Debug|x64
+		{914D3DAC-BA00-42B7-B666-AAEF16BA507B}.Release|x64.ActiveCfg = Release|x64
+		{914D3DAC-BA00-42B7-B666-AAEF16BA507B}.Release|x64.Build.0 = Release|x64
+		{BFDCEC05-B8AA-3754-9196-BBA06BF4818F}.Debug|x64.ActiveCfg = Debug|x64
+		{BFDCEC05-B8AA-3754-9196-BBA06BF4818F}.Debug|x64.Build.0 = Debug|x64
+		{BFDCEC05-B8AA-3754-9196-BBA06BF4818F}.Release|x64.ActiveCfg = Release|x64
+		{BFDCEC05-B8AA-3754-9196-BBA06BF4818F}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
