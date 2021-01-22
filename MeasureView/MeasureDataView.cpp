@@ -356,6 +356,37 @@ void MeasureDataView::on_listWidget_measureDatas_itemSelectionChanged(void)
 	ui.widget_scene->setSelectLines(indexs);
 }
 
+void MeasureDataView::on_action_openPorj_triggered(void)
+{
+	static QString last;
+	QString dir = QFileDialog::getExistingDirectory(this, QStringLiteral("请选择要打开的文件夹"),
+		last,
+		QFileDialog::ShowDirsOnly
+		| QFileDialog::DontResolveSymlinks);
+	if (dir.isEmpty())
+		return;
+	last = dir;
+	QStringList list = getFileList(dir);
+	float score = 0;
+	for (int i = 0; i < list.size(); i++)
+	{
+		if (modelFileType[i] == en_stl)
+		{
+			readStlModel(list[i], mScanData[i]);			
+		}
+		else 
+		{
+			readObjModel(list[i], mScanData[i]);
+		}
+		readEslineDatas(mScanData[i].mLineData, score, list[i] + ".data");
+	}
+}
+
+void MeasureDataView::on_action_exportModel_triggered(void)
+{
+
+}
+
 bool MeasureDataView::readSTLFile(const char *filename, std::vector<omesh::Pnt3>& vtx, std::vector<omesh::Pnt3>& normals, std::vector<omesh::TriVtx>& tris, int format /*= 0*/)
 {
 	if (format == 0) {
@@ -477,4 +508,109 @@ PtCloud& MeasureDataView::readObjModel(const QString& name)
 		}
 	}
 	return mModelCloud;
+}
+
+bool MeasureDataView::readObjModel(const QString& name, ScanData& model)
+{
+	static ObjReadWrite w;
+	w.clear();
+	bool ret = w.readFile(name.toLocal8Bit().data());
+	if (ret)
+	{
+		model.modelData.trisVtx.resize(w.mTriangles.size());
+		model.modelData.points.resize(w.mPoints.size());
+		model.modelData.normals.resize(w.mNormals.size());
+		model.modelData.texcoord.resize(w.mTextCoords.size());
+		for (int i = 0; i < w.mTriangles.size(); i++)
+		{
+			for (int j = 0; j < 3; j++)
+				model.modelData.trisVtx[i][j] = w.mTriangles[i][j] - 1;
+		}
+
+		auto conver = [](auto& from, auto& to)
+		{
+			for (int i = 0; i < from.size(); i++)
+			{
+				for (int j = 0; j < 3; j++)
+					to[i][j] = from[i][j];
+			}
+		};
+		conver(w.mPoints, model.modelData.points);
+		conver(w.mNormals, model.modelData.normals);
+		conver(w.mTextCoords, model.modelData.texcoord);
+
+		/// 读取图片
+		readModelTex(name, model.modelData.img);
+	}
+	model.load = ret;
+	return ret;
+}
+
+bool MeasureDataView::readModelTex(const QString& str, QImage& img)
+{
+	if (str.indexOf(".obj") == -1)
+	{
+		return false;
+	}
+
+	{
+		QString fstr = str;
+		fstr = fstr.replace(".obj", ".mtl");
+
+		QFile f(fstr);
+		QStringList list;
+		if (f.open(QFile::ReadOnly | QFile::Text))
+		{
+			QTextStream stream(&f);
+			QString strtemp;
+			while (!stream.atEnd())
+			{
+				strtemp = stream.readLine();
+				if (strtemp.indexOf("map_Kd") != -1)
+				{
+					list = strtemp.split(" ");
+					break;
+				}
+			}
+			f.close();
+		}
+
+		if (!list.isEmpty())
+		{
+			fstr = list[1];
+			QFileInfo info(str);
+			QString path = info.absolutePath();
+			QString temp = path + "/" + fstr;
+
+			bool b = img.load(temp);
+			img = img.convertToFormat(QImage::Format_RGB888);
+			img = img.mirrored();
+
+			return true;
+		}
+	}
+	return false;
+}
+
+QStringList MeasureDataView::getFileList(const QString& dir)
+{
+	QStringList list;
+	QString str;
+	QStringList l;
+	l = dir.split("/");
+	for (int i = 0; i < en_modelScanNull; i ++)
+	{
+		str = dir + "/" + l.last();
+		str += EnScanTypeStr[i];
+		str += EnScanTypeExtStr[i];
+		list << str;
+	}
+	return list;
+}
+
+bool MeasureDataView::readStlModel(const QString& name, ScanData& model)
+{
+	bool ret = readSTLFile(name.toLocal8Bit().data(), model.modelData.points, model.modelData.normals, model.modelData.trisVtx);
+	model.load = ret;
+	return ret;
 }

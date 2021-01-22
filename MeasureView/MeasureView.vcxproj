@@ -99,6 +99,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ObjReadWrite.h" />
+    <ClInclude Include="types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
