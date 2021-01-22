@@ -73,6 +73,8 @@
     <addaction name="action_open"/>
     <addaction name="action_export"/>
     <addaction name="action_openModel"/>
+    <addaction name="action_openPorj"/>
+    <addaction name="action_exportModel"/>
    </widget>
    <addaction name="menu"/>
   </widget>
@@ -100,13 +102,23 @@
     <string>打开模型</string>
    </property>
   </action>
+  <action name="action_openPorj">
+   <property name="text">
+    <string>打开项目</string>
+   </property>
+  </action>
+  <action name="action_exportModel">
+   <property name="text">
+    <string>导出</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
    <class>glview_widget</class>
    <extends>QWidget</extends>
-   <header location="global">glview_widget.h</header>
+   <header>glview_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

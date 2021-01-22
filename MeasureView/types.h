@@ -28,3 +28,12 @@ typedef std::vector<Vertex3Normal> PtCloud;
 #include "Face/include/Pnt3.h"
 #include "Face/include/TriMeshUtils.h"
 #include "Face/include/tnt_matrix.h"
+
+
+struct MeasureModel
+{
+	std::vector<omesh::Pnt3> points;		/// 点
+	std::vector<omesh::Pnt3> normals;		/// 法线
+	std::vector<omesh::Pnt3> texcoord;		/// uv
+	std::vector<omesh::TriVtx> trisVtx;		/// 三角形
+};
