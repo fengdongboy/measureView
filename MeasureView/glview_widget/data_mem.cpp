@@ -246,6 +246,11 @@ int data_mem::getPointSize(void) const
 	return pointSize;
 }
 
+void data_mem::setDrawType(eDrawData tp)
+{
+	drawType = tp;
+}
+
 //! [2]
 void data_mem::drawWithProgram(QOpenGLShaderProgram *program)
 {
@@ -360,7 +365,9 @@ void data_mem::drawWithProgram(QOpenGLShaderProgram *program)
         program->setAttributeBuffer(texcoordLocation, GL_FLOAT, offset, 2, sizeof(VertexData));
 
         // Draw cube geometry using indices from VBO 1
-        glDrawElements(GL_TRIANGLE_STRIP,/* 34*/4, GL_UNSIGNED_SHORT, 0);
+        //glDrawElements(GL_TRIANGLE_STRIP,/* 34*/4, GL_UNSIGNED_SHORT, 0);
+		glDrawArrays(GL_TRIANGLES, 0, pointSize);
+		glDrawArrays(GL_POINTS, 0, pointSize);
     }
 	else if (drawType == ePoints)
 	{

@@ -21,62 +21,22 @@ class data_mem;
 #define PI 3.141592653589793
 
 /// 实现渲染3次
-struct RenderObject
-{
-	bool visible;
-	data_mem *ptCloudMem;
-	std::vector<int> mSelectLineIndexs;
-	std::vector<data_mem*> mLineDatas;
 
-	RenderObject():visible(false),ptCloudMem(NULL){}
+enum renderFaceType
+{
+	en_renderFace,
+	en_renderTexture
 };
 
-struct Ball
+struct RenderModel
 {
-	bool visible;
-	float radius;
-	PtCloud points;
-	std::vector<QVector3D> indices;
-	
-	Ball(float centerx, float centery, float centerz,int radius = 5) :visible(false)
-	{
-		int stacks = 100;
-		int Slices = 50;
-		Vertex3Normal point;
-// 		point.r = 255;
-// 		point.g = point.b = 0;
-		for (int i = 0; i <= stacks; ++i) {
+	int type;		/// 模型的类型，是否带贴图
+	data_mem *ptCloudMem;
+	QOpenGLTexture *img_texture;
 
-			float V = i / (float)stacks;
-			float phi = V * PI;
-
-			// Loop Through Slices
-			for (int j = 0; j <= Slices; ++j) {
-
-				float U = j / (float)Slices;
-				float theta = U * (PI * 2);
-
-				// Calc The Vertex Positions
-				float x = cosf(theta) * sinf(phi);
-				float y = cosf(phi);
-				float z = sinf(theta) * sinf(phi);
-
-				// Push Back Vertex Data
-				point.x = x*radius + centerx;
-				point.y = y*radius + centery;
-				point.z = z*radius + centerz;
-				points.push_back(point);
-			}
-		}
-
-		// Calc The Index Positions
-		QVector3D ind;
-		for (int i = 0; i < Slices * stacks + Slices; ++i)
-		{
-			indices.push_back(QVector3D(i, i + Slices + 1, i + Slices));
-			indices.push_back(QVector3D(i + Slices + 1, i, i + 1));
-		}
-	}
+	std::vector<int> mSelectLineIndexs;
+	std::vector<data_mem*> mLineDatas;
+	RenderModel():type(0),ptCloudMem(NULL),img_texture(NULL){}
 };
 
 
@@ -92,29 +52,15 @@ public:
     explicit glview_widget(QWidget *parent = 0);
 
     ~glview_widget();
-//    Q_OBJECT
-//public:
-//    explicit es_gl_core(QWidget *parent = 0);
-//    ~es_gl_core();
+
 
 #if 1
+	void addLineData( PtCloud *cloud);
 
-    void setPtCloud(PtCloud* data,omesh::Bbox* box);
-	void setPtLines(PtCloud* data, omesh::Bbox* box);
-	void addLineData(PtCloud* lines);					/// 画线
-	void addPtCloud(PtCloud* data, omesh::Bbox* box);
 	void clear(void);
-    void setLinePts(PtCloud* data);
-    void loadPly(QString xyzFileName ="/home/hl/smb_share/3.xyz");
+
     void loadTextures();
     void setGroupId(int id);
-	void setSelectLines(std::vector<int>& select);
-
-	/// 多组姿势
-	void setPtCloud(PtCloud* data, omesh::Bbox* box, int pos);
-	void addLineData(PtCloud* lines, int pos);
-	void setPtCloudVisible(bool visible, int pos);
-	void setSelectLines(std::vector<int>& select, int pos);
 
 	void setBox(omesh::Bbox& box);
 
@@ -122,12 +68,10 @@ public:
 
 	void addCoordinateData(void);
 
-	void clearPos(int pos = -1);
+	void setModel( PtCloud* points, const QImage& img, bool hasImg = false);
+	void setSelectLines(const std::vector<int>& indexs);
 
-	void setBalls(vector<Ball> &balls, int  pos);
-
-	void setSelectBall(int index);
-
+	void renderModel(void);
 public slots:
     //below no scal work
     void viewFront();
@@ -151,38 +95,19 @@ protected:
     void initializeGL() override;
     void resizeGL(int w, int h) override;
     void paintGL() override;
-
-	void renderBalls(int pos);
-
     void initShaders();
-
-	/// 封装渲染子场景的函数
-	void renderSubSence(void);
-
 private:
     QBasicTimer timer;
     QOpenGLShaderProgram programPtcloud;
     QOpenGLShaderProgram programLine;
     QOpenGLShaderProgram programTexture;
 	QOpenGLShaderProgram programAxes;
-    data_mem *ptCloudMem;
-    data_mem *lineDataMem;
-	data_mem *mLineDataMem;			/// 用点的shader画线
-    data_mem *textureOpeMem;
-	data_mem *mCoordinateMem[3];		/// 坐标轴的点
 
-	vector<data_mem*> m_ballMems;  //球显示
-	map<int, vector<data_mem*>> m_ballMap;
+	data_mem *mCoordinateMem[3];		/// 坐标轴的点
 
 	omesh::Bbox mBox;
 	QMutex mMutexLines;					/// 线条的数据锁
-	std::vector<data_mem*> mLineDatas;
 
-	RenderObject mRenderObject[render_object_num];
-    QOpenGLTexture *img_texture;
-    //AxiDraw* axiDraw;
-
-	std::vector<int> mSelectLineIndexs;
 
     QMatrix4x4 projection;
 
@@ -212,11 +137,6 @@ private:
     QVector2D viewShift;
     QVector2D viewShiftMutPara;
 
-
-    //支持同时显示点云和线条
-    PtCloud points;
-    PtCloud line_pts;
-
     omesh::Bbox box_forlinePts;
     float BOX_SCALL;//=1.2
     float PTVIEW_SCALL;// 2
@@ -231,7 +151,9 @@ private:
 
 	QMatrix4x4 mMatriViewCoodinate;
 
-	int m_selectBall;
+	/// 渲染的模型
+	RenderModel mRenderModel;
+
 #endif
 };
 

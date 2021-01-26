@@ -11,9 +11,7 @@ using namespace omesh;
 
 
 glview_widget::glview_widget(QWidget *parent) :
-     QOpenGLWidget(parent),ptCloudMem(NULL),lineDataMem(NULL),\
-     textureOpeMem(NULL),img_texture(NULL),mLineDataMem(NULL),mCoodinateVisible(false)
-	, m_selectBall(0)
+     QOpenGLWidget(parent),mCoodinateVisible(false)
 {
 
         //光照设置
@@ -48,18 +46,6 @@ glview_widget::glview_widget(QWidget *parent) :
 
 glview_widget::~glview_widget(){
 
-  delete ptCloudMem;
-  delete lineDataMem;
-    delete textureOpeMem;
-
-	if (mLineDataMem)
-		delete mLineDataMem;
-
-	for (int i = 0; i < mLineDatas.size(); i ++)
-	{
-		delete mLineDatas[i];
-	}
-	mLineDatas.clear();
 
 	if (mCoordinateMem)
 	{
@@ -69,184 +55,6 @@ glview_widget::~glview_widget(){
 	}
 }
 
-void glview_widget::setPtCloud(PtCloud* data,omesh::Bbox* box){
-
-    points.clear();
-
-    if (data->size()>0) {
-
-#if 0
-        while (!std::getline(inFile, s).eof())
-        {
-            point3d pt;
-            char dat[100];
-            strcpy(dat, s.c_str());
-            sscanf(dat, "%f %f %f %f %f %f", &pt.x, &pt.y, &pt.z, &pt.nx, &pt.ny, &pt.nz);
-            static int colorId = 0;
-            pt.r = 0;
-            pt.g = 100;
-            pt.b = 40;
-            points.push_back(pt);
-            mBox.add(pt.x, pt.y, pt.z);
-
-        }
-#else
-
-        if(data->size()){
-            points.resize(data->size());
-            memcpy(points.data(),data->data(),data->size()*sizeof(Vertex3Normal));
-        }
-
-#endif
-
-        if(box){
-			setBox(*box);
-        }else{
-
-            omesh::Bbox mBox;
-            for(auto it=points.begin();it!=points.end();it++){
-
-                mBox.add(it->x,it->y,it->z);
-            }
-			setBox(mBox);
-        }
-
-		rotation = QQuaternion();
-		viewShift = QVector2D(0, 0);
-
-#if 1
-
-        if(ptCloudMem)
-        {
-			makeCurrent();
-            ptCloudMem->ptCloudDateUpdate(&points);
-            update();
-			mCoodinateVisible = true;
-        }
-#endif
-    }
-}
-
-void glview_widget::setPtCloud(PtCloud* data, omesh::Bbox* box, int pos)
-{
-	if (pos >= render_object_num || pos < 0)
-		return;
-
-	data_mem*& pCloudMem = mRenderObject[pos].ptCloudMem;
-	if (pCloudMem == NULL)
-	{
-		pCloudMem = new data_mem(ePtData);
-	}	
-
-	if (data->size() > 0) {
-
-		if (box) {
-			setBox(*box);
-		}
-		else {
-
-			omesh::Bbox mBox;
-			for (auto it = data->begin(); it != data->end(); it++) {
-				mBox.add(it->x, it->y, it->z);
-			}
-			setBox(mBox);
-		}
-
-		rotation = QQuaternion();
-		viewShift = QVector2D(0, 0);
-
-		if (pCloudMem)
-		{
-			makeCurrent();
-			pCloudMem->ptCloudDateUpdate(data);
-			update();
-			mCoodinateVisible = true;
-		}
-
-	}
-}
-
-void glview_widget::setPtLines(PtCloud* data, omesh::Bbox* box)
-{
-	if (data->size() > 0) 
-	{		
-		omesh::Bbox Box;
-		if (box)
-		{
-		}
-		else 
-		{			
-			for (auto it = data->begin(); it != data->end(); it++)
-			{
-				Box.add(it->x, it->y, it->z);
-			}
-			box = &Box;
-		}		
-		setBox(*box);
-		if (mLineDataMem)
-		{
-			makeCurrent();
-			mLineDataMem->ptCloudDateUpdate(data);
-			update();
-			mCoodinateVisible = true;
-		}
-	}
-}
-
-void glview_widget::addLineData(PtCloud* lines)
-{
-	//if (!lines->empty())
-	{		
-		for (auto it = lines->begin(); it != lines->end(); it++)
-		{
-			mBox.add(it->x, it->y, it->z);
-		}
-		
-		setBox(mBox);
-
-		data_mem *l = new data_mem(ePtLinesData);
-		makeCurrent();
-		l->ptCloudDateUpdate(lines);
-		mMutexLines.lock();
-		mLineDatas.push_back(l);
-		mMutexLines.unlock();
-		update();
-		mCoodinateVisible = true;
-	}
-}
-
-void glview_widget::addLineData(PtCloud* lines, int pos)
-{
-	if (pos >= render_object_num || pos < 0)
-		return;
-	//if (!lines->empty())
-	{
-		std::vector<data_mem*>& total= mRenderObject[pos].mLineDatas;
-
-		for (auto it = lines->begin(); it != lines->end(); it++)
-		{
-			mBox.add(it->x, it->y, it->z);
-		}
-
-		setBox(mBox);
-
-		data_mem *l = new data_mem(ePtLinesData);
-		makeCurrent();
-		l->ptCloudDateUpdate(lines);
-		total.push_back(l);
-		update();
-		mCoodinateVisible = true;
-	}
-
-}
-
-void glview_widget::setPtCloudVisible(bool visible, int pos)
-{
-	if (pos >= render_object_num || pos < 0)
-		return;
-	mRenderObject[pos].visible = visible;
-	update();
-}
 
 void glview_widget::setBox(omesh::Bbox& box)
 {
@@ -261,138 +69,38 @@ void glview_widget::setBox(omesh::Bbox& box)
 	box_forlinePts = box;
 }
 
-void glview_widget::addPtCloud(PtCloud* data, omesh::Bbox* box)
+
+void glview_widget::addLineData( PtCloud *lines)
 {
-	if (data->size() > 0) 
+	for (auto it = lines->begin(); it != lines->end(); it++)
 	{
-		points.insert(points.end(), data->begin(), data->end());
-		if (box) 
-		{
-			box_forlinePts.add(*box);
-		}
-		else {
-
-			omesh::Bbox mBox;
-			for (auto it = points.begin(); it != points.end(); it++) {
-
-				mBox.add(it->x, it->y, it->z);
-			}
-
-			auto cent = mBox.center();
-			auto dis = mBox.diag();
-			pt3_g = cent;
-
-			scal_g = 1.0 / dis;
-			scal_g *= 1.5;
-			float sc = PTVIEW_SCALL / dis;// (15 / dis);
-			setProperty("scal_g", scal_g);
-
-										  //box of line same as points'box
-			box_forlinePts = mBox;
-		}
-		if (ptCloudMem)
-		{
-			ptCloudMem->ptCloudDateUpdate(&points);
-			update();
-			mCoodinateVisible = true;
-		}
+		mBox.add(it->x, it->y, it->z);
 	}
-}
 
+	setBox(mBox);
+
+	data_mem *l = new data_mem(ePtLinesData);
+	makeCurrent();
+	l->ptCloudDateUpdate(lines);
+	mMutexLines.lock();
+	mRenderModel.mLineDatas.push_back(l);
+	mMutexLines.unlock();
+	update();
+	mCoodinateVisible = true;
+}
 
 void glview_widget::clear(void)
 {
-	points.resize(1);
-	if (ptCloudMem)
-	{
-		ptCloudMem->ptCloudDateUpdate(&points);
-		update();
-	}
 
-	for (int i = 0; i < mLineDatas.size(); i ++)
-	{
-		delete mLineDatas[i];
-	}
-	mLineDatas.clear();
-	mCoodinateVisible = false;
 }
 
 //! [4]
 
-void glview_widget::setLinePts(PtCloud* data){
-
-    line_pts.clear();
-
-    if (data->size()>0) {
-
-        line_pts=*data;
-    }
-}
-
-void glview_widget::loadPly(QString xyzFileName){
-
-    omesh::Bbox mBox;
-    points.clear();
-    string s;
-    ifstream inFile(xyzFileName.toStdString().c_str());
-
-    if (inFile.is_open()) {
-
-        while (!std::getline(inFile, s).eof())
-        {
-             Vertex3Normal  pt;
-            char dat[100];
-            strcpy(dat, s.c_str());
-            sscanf(dat, "%f %f %f %f %f %f", &pt.x, &pt.y, &pt.z, &pt.nx, &pt.ny, &pt.nz);
-           // static int colorId = 0;
-
-            //float va=rand()%10;
-//            pt.x=va*0.1;
-//            pt.y=va*0.1;
-//            pt.z=va*0.1;
-            pt.nx=0.8;
-            pt.ny=0.3;
-            pt.nz=0.3;
-            points.push_back(pt);
-            mBox.add(pt.x, pt.y, pt.z);
-
-        }
-
-        auto cent = mBox.center();
-        auto dis =  mBox.diag();
-        pt3_g=cent;
-        mBox.makeCube(BOX_SCALL);
-        //g_Box=mBox;
-
-        float sc = PTVIEW_SCALL / dis;// (15 / dis);
-        //相对原点放缩
-        //initMatrix.scale(sc, sc, sc);
-
-        //initMatrix.translate(-(cent[0] * sc),\
-         //   - (cent[1] * sc), -(cent[2] * sc));
-
-        //mGlType = eGlPoint;
-
-       // transMatrixBk = transMatrix;
-       // initMatrixBk = initMatrix;
-        //sc_g=sc;
-       // ce_x= -(cent[0] * sc);
-       // ce_y= -(cent[1] * sc);
-       // ce_z= -(cent[2] * sc);
-
-        //int sz=points.size();
-        if(ptCloudMem)
-        {
-            ptCloudMem->ptCloudDateUpdate(&points);
-            update();
-        }
-    }
-
-}
 
 void glview_widget::loadTextures()
 {
-    // Load cube.png image
+#if 0
+	// Load cube.png image
     if(!img_texture)
         img_texture = new QOpenGLTexture(QImage(":/cube.png").mirrored());
     else{
@@ -411,8 +119,9 @@ void glview_widget::loadTextures()
 
     //trig fbo,
     //programTexture.imgAxiUpdate();
-    textureOpeMem->imgAxiUpdate();
+
     update();
+#endif
 }
 
 void glview_widget::setGroupId(int id){
@@ -420,18 +129,6 @@ void glview_widget::setGroupId(int id){
     groupId=id;
 }
 
-void glview_widget::setSelectLines(std::vector<int>& select)
-{
-	mSelectLineIndexs.swap(select);
-	update();
-}
-
-void glview_widget::setSelectLines(std::vector<int>& select, int pos)
-{
-	if (pos < 0 && pos > render_object_num)
-		return;
-	mRenderObject[pos].mSelectLineIndexs = select;
-}
 
 void glview_widget::setColor(const QVector3D& MaterialAmbient, const QVector3D& MaterialDiffuse, const QVector3D& MaterialSpecular)
 {
@@ -495,99 +192,96 @@ void glview_widget::addCoordinateData(void)
 	update();
 }
 
-void glview_widget::clearPos(int pos /*= -1*/)
+
+void glview_widget::setModel( PtCloud* cloud, const QImage& img, bool hasImg /*= false*/)
 {
-	memData tempData;
-	tempData.resize(1);
-
-	auto f = [=](int index, memData* p)
-	{	
-		if (mRenderObject[index].ptCloudMem)
-		mRenderObject[index].ptCloudMem->ptCloudDateUpdate(p);
-		for (int i = 0; i < mRenderObject[index].mLineDatas.size(); i++)
-		{
-			delete mRenderObject[index].mLineDatas[i];
-		}
-		mRenderObject[index].mLineDatas.clear();
-		mCoodinateVisible = false;
-
-	};
-	if (pos >= 0 && pos < render_object_num)
+	for (auto it = cloud->begin(); it != cloud->end(); it++)
 	{
-		f(pos, &tempData);
-		auto iter = m_ballMap.find(pos);
-		if (iter != m_ballMap.end())
-		{
-			vector<data_mem*> &mm = iter->second;
-			for (size_t i = 0; i < mm.size(); i++)
-			{
-				delete mm[i];
-			}
-			m_ballMap.erase(iter);
-		}
-		update();
+		mBox.add(it->x, it->y, it->z);
 	}
-	else if (pos == -1)
+	setBox(mBox);
+
+	data_mem *&textureOpeMem = mRenderModel.ptCloudMem;
+	if (textureOpeMem == NULL)
 	{
-		for (int i = 0; i < render_object_num; i ++)
-		{
-			f(i, &tempData);
-		}
-		for (auto iter = m_ballMap.begin(); iter !=m_ballMap.end(); iter++)
-		{
-			vector<data_mem*> &mm = iter->second;
-			for (size_t i = 0; i < mm.size(); i++)
-			{
-				delete mm[i];
-			}
-		}
-		m_ballMap.clear();
-		update();
+		textureOpeMem = new data_mem(ePtData);
 	}
+	textureOpeMem->ptCloudDateUpdate(cloud);
+	mRenderModel.type = en_renderFace;
 
-	
-		
-}
-
-void glview_widget::setBalls(vector<Ball> &balls, int pos)
-{
-// 	if (balls.size() == m_ballMems.size())
-// 	{
-// 		for (int i = 0; i < balls.size(); i++)
-// 		{
-// 			m_ballMems[i]->ptCloudDateUpdate(&balls[i].points);
-// 		}
-// 	}
-// 	else 
-// 	{
-// 		for (size_t i = 0; i < m_ballMems.size(); i++)
-// 		{
-// 			delete m_ballMems[i];
-// 		}
-// 		m_ballMems.clear();
-// 
-// 		for (size_t i = 0; i < balls.size(); i++)
-// 		{
-// 			data_mem *dm = new data_mem(ePoints);
-// 			dm->ptCloudDateUpdate(&balls[i].points);
-// 			m_ballMems.push_back(dm);
-// 		}
-// 	}
-
-	vector<data_mem*> ballMem;
-	for (size_t i = 0; i < balls.size(); i++)
+	if (hasImg)
 	{
-		data_mem *dm = new data_mem(ePoints);
-		dm->ptCloudDateUpdate(&balls[i].points);
-		ballMem.push_back(dm);
-	}
-	m_ballMap[pos] = ballMem;
-}
+		textureOpeMem->setDrawType(eTexture);
+		mRenderModel.type = en_renderTexture;
+		QOpenGLTexture *&img_texture = mRenderModel.img_texture;
+		if (img_texture)
+		{
+			delete img_texture;
+			img_texture = NULL;
+		}
 
-void glview_widget::setSelectBall(int index)
-{
-	m_selectBall = index;
+		if (!img_texture)
+		{
+			img_texture = new QOpenGLTexture(img);
+			img_texture->setMinificationFilter(QOpenGLTexture::Nearest);
+			img_texture->setMagnificationFilter(QOpenGLTexture::Linear);
+			img_texture->setWrapMode(QOpenGLTexture::Repeat);
+		}
+		else
+		{
+			img_texture->setData(img);
+		}
+	}
 	update();
+}
+
+void glview_widget::setSelectLines(const std::vector<int>& indexs)
+{
+	mRenderModel.mSelectLineIndexs = indexs;
+}
+
+void glview_widget::renderModel(void)
+{
+	/// 画模型
+	if (mRenderModel.type == en_renderFace)
+	{
+		programPtcloud.bind();
+		if (mRenderModel.ptCloudMem)
+			mRenderModel.ptCloudMem->drawWithProgram(&programPtcloud);
+	}
+	else if (mRenderModel.type == en_renderTexture)
+	{
+		if (mRenderModel.img_texture)
+			mRenderModel.img_texture->bind();
+		programTexture.bind();
+		programTexture.setUniformValue("texture", 0);
+		if (mRenderModel.ptCloudMem)
+			mRenderModel.ptCloudMem->drawWithProgram(&programTexture);
+	}
+
+	/// 画线
+	programPtcloud.bind();
+	std::vector<data_mem*>& LineDatas = mRenderModel.mLineDatas;
+	std::vector<int>& mSelectLineIndexs = mRenderModel.mSelectLineIndexs;
+	int index = 0;
+	for (int i = 0; i < LineDatas.size(); i++)
+	{
+		if (index < mSelectLineIndexs.size() && mSelectLineIndexs[index] == i)
+		{
+			/// 设置选中的颜色
+			programPtcloud.setUniformValue("renderType", 2);
+			index++;
+			glLineWidth(4);
+			LineDatas[i]->drawWithProgram(&programPtcloud);
+		}
+		else
+		{
+			continue;
+			glLineWidth(2);
+			programPtcloud.setUniformValue("renderType", 1);
+			LineDatas[i]->drawWithProgram(&programPtcloud);
+		}
+	}
 }
 
 void glview_widget::viewFront() {
@@ -763,29 +457,12 @@ void glview_widget::mouseMoveEvent(QMouseEvent *e)
  }
 //! [0]
 
-//! [1]
-//void es_gl_core::timerEvent(QTimerEvent *)
-//{
-//    // Decrease angular speed (friction)
-//    angularSpeed *= 0.59;
 
-//    // Stop rotation when speed goes below threshold
-//    if (angularSpeed < 0.01) {
-//        angularSpeed = 0.0;
-//    } else {
-//        // Update rotation
-//        rotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed) * rotation;
-
-//        // Request an update
-//        update();
-//    }
-//}
-//! [1]
 
 
  void glview_widget::initializeGL()
  {
-     #if 1
+    #if 1
      initializeOpenGLFunctions();
 
      GLenum err = glGetError();
@@ -821,10 +498,7 @@ void glview_widget::mouseMoveEvent(QMouseEvent *e)
      printf("GeometryEngPt begin err code:%d\n",err);
 
      //create point cloud or line mem,so can update some time
-     ptCloudMem = new data_mem(ePtData);
-     lineDataMem = new data_mem(eLineData);
-     textureOpeMem=new data_mem(eTexture);
-	 mLineDataMem = new data_mem(ePtLinesData);
+
      err = glGetError();
     printf("GeometryEngPt end err code:%d\n",err);
 
@@ -835,7 +509,7 @@ void glview_widget::mouseMoveEvent(QMouseEvent *e)
      //timer.start(12, this);
  //loadPly();
      //
-    #endif
+  #endif
 
 	addCoordinateData();
  }
@@ -885,9 +559,7 @@ void glview_widget::paintGL()
 
     makeCurrent();
     #if 1
-    //GLenum err = glGetError();
-    //printf("err code:%d\n",err);
-    // Clear color and depth buffer
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_MULTISAMPLE_ARB);
 
@@ -900,16 +572,9 @@ void glview_widget::paintGL()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    //texture->bind();
-
-    //! [6]
-    // Calculate model view transformation
     QMatrix4x4 matrix;
 
-    // initMatrix.x;
-    // matrix.translate(0.0, 0.0, -0.0);
 
-    //matrix.translate( ce_x, ce_y, ce_z);
     matrix.scale( scal_g );
     matrix.rotate( rotation );//pt3_g
 
@@ -918,10 +583,7 @@ void glview_widget::paintGL()
 		matrixInit.rotate(-90, 1.0, 0.0, 0.0);
 		matrixInit.rotate(180.0, 0.0, 0.0, 1.0);
 	}
-	//else if (groupId == 1) {
-	//	matrixInit.rotate(-180.0, 1.0, 0.0, 0.0);
-	//	matrixInit.rotate(90.0, 0.0, 0.0, 1.0);
-	//}
+
 	matrixCoord = matrixInit;
     matrixInit.translate( -pt3_g[0], -pt3_g[1], -pt3_g[2]);
 
@@ -930,11 +592,6 @@ void glview_widget::paintGL()
 
     QMatrix4x4 shitfMat;
 
-    //float wit=this->width();
-    //float hit=this->height();
-
-    //float hor=2.0*(wit/hit)*(((float)viewShift[0])/wit);
-    //float ver=2.0*(1)*(((float)viewShift[1])/hit);
     shitfMat.translate( -viewShift[0]*viewShiftMutPara[0], -viewShift[1]*viewShiftMutPara[1], 0);
 
     QMatrix4x4 modelview = view * shitfMat*matrix * matrixInit;
@@ -956,8 +613,6 @@ void glview_widget::paintGL()
 		matrix.rotate(rotation);
 
 		matrix.scale(100);
-		//trant.translate(-0.9, -0.9, 0);
-		//programPtcloud.setUniformValue("uModelViewProjection", trant* matrix /*projection * modelview*/);
 
 		programAxes.setUniformValue("renderType", 3);
 		programAxes.setUniformValue("inColor", QVector4D(0, 0, 1, 1));
@@ -972,8 +627,6 @@ void glview_widget::paintGL()
 		programAxes.setUniformValue("inColor", QVector4D(1, 1, 0, 1));
 		mCoordinateMem[2]->drawWithProgram(&programAxes);
 	}
-
-
 
     programPtcloud.bind();
 
@@ -991,120 +644,24 @@ void glview_widget::paintGL()
     programPtcloud.setUniformValue("uMaterialDiffuse", uMaterialDiffuse);
     programPtcloud.setUniformValue("uMaterialSpecular", uMaterialSpecular);
     programPtcloud.setUniformValue("uShininess", uShininess);
-    //! [6]
 
-    // Use texture unit 0 which contains cube.png
-    //program.setUniformValue("texture", 0);
+	programTexture.bind();
+	QMatrix4x4 mvMat;
+	mvMat.translate(0.0f, 0.0f, -3.0f);
 
-    // Draw cube geometry
+	//QMatrix4x4 matrixInit1;
+	//matrixInit1.rotate(180.0, 0.0, 0.0, 1.0);
+	//matrixInit1.translate(-pt3_g[0], -pt3_g[1], -pt3_g[2]);
 
+	//QMatrix4x4 modelview1 = view * shitfMat*matrix*matrixInit1;
 
-	int index = 0;
-	for (int i = 0; i < mLineDatas.size(); i ++)
-	{		
-		if (index<mSelectLineIndexs.size()&& mSelectLineIndexs[index] == i)
-		{			
-			/// 设置选中的颜色
-			programPtcloud.setUniformValue("renderType", 2);
-			index++;
-			glLineWidth(4);
-			mLineDatas[i]->drawWithProgram(&programPtcloud);
-			
-		}
-		else
-		{
-			continue;
-			glLineWidth(2);
-			programPtcloud.setUniformValue("renderType", 1);
-			mLineDatas[i]->drawWithProgram(&programPtcloud);
-		}		
-	}
+	//programTexture.setUniformValue("uModelViewProjection", projection * modelview1);
+	programTexture.setUniformValue("uModelViewProjection", projection * modelview);
 
-	if (ptCloudMem)
-	{
-		int type = mLineDatas.empty() ? 0 : 3;
-		programPtcloud.setUniformValue("renderType", type);
-		if (type == 3)
-			ptCloudMem->drawWithProgram(&programPtcloud);
-		else
-			ptCloudMem->drawWithProgramPoints(&programPtcloud);
-	}
-
-	if (mLineDataMem)
-		mLineDataMem->drawWithProgram(&programPtcloud);
-
-//	renderBalls(TODO);
-
-	renderSubSence();
-
-
-    #endif
-
-    //img texure
-    #if 1
-
-    if(img_texture)
-    {
-
-        //for img test
-        // Clear color and depth buffer
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        img_texture->bind();
-
-        programTexture.bind();
-        //! [6]
-        // Calculate model view transformation
-        QMatrix4x4 matrix;
-        matrix.translate(0.0, 0.0, -5.0);
-        matrix.rotate(rotation);
-
-        // Set modelview-projection matrix
-        programTexture.setUniformValue("mvp_matrix", projection /** matrix*/);
-        //! [6]
-
-        // Use texture unit 0 which contains cube.png
-        programTexture.setUniformValue("texture", 0);
-
-        // Draw cube geometry
-        //programTexture->drawWithProgram(&program);
-        if(textureOpeMem){
-            textureOpeMem->drawWithProgram(&programTexture);
-         }
-    }
-    #endif		
-}
-
-
-void glview_widget::renderBalls(int pos)
-{
-// 	for (size_t i = 0; i < m_ballMems.size(); i++)
-// 	{
-// 		if (i != m_selectBall)
-// 		{
-// 			programPtcloud.setUniformValue("renderType", 4);
-// 		}
-// 		else
-// 			programPtcloud.setUniformValue("renderType", 5);
-// 		
-// 		m_ballMems[i]->drawWithProgram(&programPtcloud);
-// 	}
-	auto iter = m_ballMap.find(pos);
-	if (iter != m_ballMap.end())
-	{
-		vector<data_mem*> &mems = iter->second;
-		for (size_t i = 0; i < mems.size(); i++)
-		{
-			if (i != m_selectBall)
-			{
-				programPtcloud.setUniformValue("renderType", 4);
-			}
-			else
-				programPtcloud.setUniformValue("renderType", 5);
-
-			mems[i]->drawWithProgram(&programPtcloud);
-		}
-	}
+	programTexture.setUniformValue("texture", 0);
+	renderModel();
+#else
+#endif
 }
 
 //! [3]
@@ -1282,56 +839,6 @@ void glview_widget::initShaders()
      }
 }
 
-void glview_widget::renderSubSence(void)
-{
-	auto f = [=](int pos) 
-	{	
-		if (mRenderObject[pos].visible == false)		
-			return;
-		
-		std::vector<data_mem*>& LineDatas = mRenderObject[pos].mLineDatas;
-		data_mem *pCloudMem = mRenderObject[pos].ptCloudMem;
-		int index = 0;
-	for (int i = 0; i < LineDatas.size(); i++)
-	{
-		if (index < mRenderObject[pos].mSelectLineIndexs.size() && mRenderObject[pos].mSelectLineIndexs[index] == i)
-		{
-			/// 设置选中的颜色
-			programPtcloud.setUniformValue("renderType", 2);
-			index++;
-			glLineWidth(4);
-			LineDatas[i]->drawWithProgram(&programPtcloud);
-
-		}
-		else
-		{
-			continue;
-			glLineWidth(2);
-			programPtcloud.setUniformValue("renderType", 1);
-			LineDatas[i]->drawWithProgram(&programPtcloud);
-		}
-	}
-
-	if (pCloudMem)
-	{
-		int type = LineDatas.empty() ? 0 : 3;
-		programPtcloud.setUniformValue("renderType", type);
-		if (type == 3)
-			pCloudMem->drawWithProgram(&programPtcloud);
-		else
-			pCloudMem->drawWithProgramPoints(&programPtcloud);
-	}
-	renderBalls(pos);
-	//if (mLineDataMem)
-	//	mLineDataMem->drawWithProgram(&programPtcloud);
-	};
-
-	for (int i = 0; i < render_object_num; i ++)
-	{
-		f(i);
-	}
-
-}
 
 //! [3]
 

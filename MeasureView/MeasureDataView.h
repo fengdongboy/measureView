@@ -12,41 +12,6 @@
 
 #include "ui_MeasureDataView.h"
 
-#ifndef __EsLineData__
-#define __EsLineData__
-struct EsLineData
-{
-	std::string name;
-	float value;
-	bool CF;
-
-	std::vector<omesh::Pnt3> Points;
-	std::vector<omesh::TriVtx> Tris;
-
-	EsLineData() :name(""), value(0.0f) {}
-	EsLineData(const std::string& str, float lenght = 0.0f) :name(str), value(lenght)
-	{
-	}
-
-	void setName(const std::string& name)
-	{
-		this->name = name;
-	}
-	const std::string getName(void) const
-	{
-		return name;
-	}
-
-	void setValue(float v)
-	{
-		value = v;
-	}
-	float getValue(void) const
-	{
-		return value;
-	}
-};
-#endif
 
 
 
@@ -91,7 +56,8 @@ private:
 	Ui::MeasureDataView ui;
 
 	std::vector<EsLineData> mLineData;
+	ScanData mScanData;
 
-	ScanData mScanData[en_modelScanNull];
+	//ScanData mScanData[en_modelScanNull];
 };
 #endif

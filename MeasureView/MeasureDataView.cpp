@@ -316,21 +316,38 @@ void MeasureDataView::on_action_openModel_triggered(void)
 	QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
 		"",
 		tr("datas (*.obj);; txt (*.stl)"));
+
+	PtCloud cloud;
 	if (!fileName.isEmpty())
 	{
 		QString str = fileName.right(3);
 		str = str.toLower();
 		if (str == "obj")
 		{
-			PtCloud cloud = readObjModel(fileName);
-			ui.widget_scene->setPtCloud(&cloud, NULL);
+			//PtCloud cloud = readObjModel(fileName);
+			//ui.widget_scene->setPtCloud(&cloud, NULL);
+			bool ret = readObjModel(fileName, mScanData);
+			if (ret)
+			{
+				if (mScanData.modelData.hasImg)				
+					cloud = mScanData.modelData.getTexcoordCloud();				
+				else				
+					cloud = mScanData.modelData.getCloud();				
+			}
+			ui.widget_scene->setModel(&cloud, mScanData.modelData.img, mScanData.modelData.hasImg);
 		}
 		else if (str == "stl")
 		{
-			PtCloud cloud = readPoissonStl(fileName);
-			ui.widget_scene->setPtCloud(&cloud, NULL);
-		}
+			//PtCloud cloud = readPoissonStl(fileName);
+			//ui.widget_scene->setPtCloud(&cloud, NULL);
 
+			bool ret = readStlModel(fileName, mScanData);
+			if (ret)
+			{
+				cloud = mScanData.modelData.getCloud();
+				ui.widget_scene->setModel(&cloud, mScanData.modelData.img, false);
+			}
+		}
 	}
 }
 
@@ -358,6 +375,7 @@ void MeasureDataView::on_listWidget_measureDatas_itemSelectionChanged(void)
 
 void MeasureDataView::on_action_openPorj_triggered(void)
 {
+#if 0
 	static QString last;
 	QString dir = QFileDialog::getExistingDirectory(this, QStringLiteral("请选择要打开的文件夹"),
 		last,
@@ -380,6 +398,8 @@ void MeasureDataView::on_action_openPorj_triggered(void)
 		}
 		readEslineDatas(mScanData[i].mLineData, score, list[i] + ".data");
 	}
+#else
+#endif
 }
 
 void MeasureDataView::on_action_exportModel_triggered(void)
@@ -538,9 +558,11 @@ bool MeasureDataView::readObjModel(const QString& name, ScanData& model)
 		conver(w.mPoints, model.modelData.points);
 		conver(w.mNormals, model.modelData.normals);
 		conver(w.mTextCoords, model.modelData.texcoord);
+		model.modelData.mTextCoordIndexs = w.mTextCoordIndexs;
 
 		/// 读取图片
-		readModelTex(name, model.modelData.img);
+		bool r = readModelTex(name, model.modelData.img);
+		model.modelData.hasImg = r;
 	}
 	model.load = ret;
 	return ret;

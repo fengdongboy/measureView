@@ -27,6 +27,8 @@ public:
      void imgAxiUpdate();
 
 	 int getPointSize(void) const;
+
+	 void setDrawType(eDrawData tp);
 private:
 
     int meshSize;
