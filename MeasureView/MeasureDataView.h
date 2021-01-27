@@ -39,6 +39,11 @@ public:
 	/// 导出模型
 	void on_action_exportModel_triggered(void);
 
+	/// 视角选择
+	void on_comboBox_viewSelect_currentIndexChanged(int index);
+
+	void sltRefreshTable(const std::vector<EsLineData>& datas);
+
 protected:
 	bool readSTLFile(const char *filename, std::vector<omesh::Pnt3>& vtx, std::vector<omesh::Pnt3>& normals, std::vector<omesh::TriVtx>& tris, int format = 0);
 

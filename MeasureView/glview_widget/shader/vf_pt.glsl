@@ -40,13 +40,7 @@ precision highp float;
 			gl_FragColor = vec4(0.12,0.411,0.82,1.0);
 		else if (renderType == 3)
 			gl_FragColor = vec4(final_color,0.6);
-		else if (renderType == 4)
-		{
-		    gl_FragColor = vec4(1.0,0,0,1.0);
-		}
-		else if (renderType == 5)
-			gl_FragColor = vec4(0.0,1.0,0.0,1.0);
-		else 
+			else 
 			gl_FragColor = vec4(final_color,1.0);
         //gl_FragColor=vec4(1.0,0.0,0.0,1.0);
      }

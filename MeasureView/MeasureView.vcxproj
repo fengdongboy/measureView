@@ -87,6 +87,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="FileExportManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MeasureDataView.cpp" />
     <ClCompile Include="ObjReadWrite.cpp" />
@@ -98,6 +99,7 @@
     <QtUic Include="MeasureDataView.ui" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FileExportManager.h" />
     <ClInclude Include="ObjReadWrite.h" />
     <ClInclude Include="types.h" />
   </ItemGroup>

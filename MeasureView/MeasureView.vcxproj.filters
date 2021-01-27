@@ -34,6 +34,9 @@
     <ClCompile Include="ObjReadWrite.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FileExportManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="MeasureDataView.h">
@@ -50,6 +53,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileExportManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

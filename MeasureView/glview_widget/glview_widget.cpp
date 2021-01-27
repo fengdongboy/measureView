@@ -91,7 +91,13 @@ void glview_widget::addLineData( PtCloud *lines)
 
 void glview_widget::clear(void)
 {
-
+	delete mRenderModel.ptCloudMem;
+	mRenderModel.ptCloudMem = NULL;
+	for (int i = 0; i < mRenderModel.mLineDatas.size(); i++)
+	{
+		delete mRenderModel.mLineDatas[i];
+	}
+	mRenderModel.mLineDatas.clear();
 }
 
 //! [4]
@@ -206,6 +212,7 @@ void glview_widget::setModel( PtCloud* cloud, const QImage& img, bool hasImg /*=
 	{
 		textureOpeMem = new data_mem(ePtData);
 	}
+
 	textureOpeMem->ptCloudDateUpdate(cloud);
 	mRenderModel.type = en_renderFace;
 
@@ -238,27 +245,11 @@ void glview_widget::setModel( PtCloud* cloud, const QImage& img, bool hasImg /*=
 void glview_widget::setSelectLines(const std::vector<int>& indexs)
 {
 	mRenderModel.mSelectLineIndexs = indexs;
+	update();
 }
 
 void glview_widget::renderModel(void)
 {
-	/// 画模型
-	if (mRenderModel.type == en_renderFace)
-	{
-		programPtcloud.bind();
-		if (mRenderModel.ptCloudMem)
-			mRenderModel.ptCloudMem->drawWithProgram(&programPtcloud);
-	}
-	else if (mRenderModel.type == en_renderTexture)
-	{
-		if (mRenderModel.img_texture)
-			mRenderModel.img_texture->bind();
-		programTexture.bind();
-		programTexture.setUniformValue("texture", 0);
-		if (mRenderModel.ptCloudMem)
-			mRenderModel.ptCloudMem->drawWithProgram(&programTexture);
-	}
-
 	/// 画线
 	programPtcloud.bind();
 	std::vector<data_mem*>& LineDatas = mRenderModel.mLineDatas;
@@ -282,6 +273,26 @@ void glview_widget::renderModel(void)
 			LineDatas[i]->drawWithProgram(&programPtcloud);
 		}
 	}
+
+	/// 画模型
+	if (mRenderModel.type == en_renderFace)
+	{
+		programPtcloud.bind();
+		programPtcloud.setUniformValue("renderType", 3);
+		if (mRenderModel.ptCloudMem)
+			mRenderModel.ptCloudMem->drawWithProgram(&programPtcloud);
+	}
+	else if (mRenderModel.type == en_renderTexture)
+	{
+		if (mRenderModel.img_texture)
+			mRenderModel.img_texture->bind();
+		programTexture.bind();
+		programTexture.setUniformValue("texture", 0);
+		if (mRenderModel.ptCloudMem)
+			mRenderModel.ptCloudMem->drawWithProgram(&programTexture);
+	}
+
+
 }
 
 void glview_widget::viewFront() {
@@ -644,6 +655,12 @@ void glview_widget::paintGL()
     programPtcloud.setUniformValue("uMaterialDiffuse", uMaterialDiffuse);
     programPtcloud.setUniformValue("uMaterialSpecular", uMaterialSpecular);
     programPtcloud.setUniformValue("uShininess", uShininess);
+
+
+
+
+	
+
 
 	programTexture.bind();
 	QMatrix4x4 mvMat;

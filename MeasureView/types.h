@@ -89,6 +89,27 @@ struct MeasureModel
 		return cloud;
 	}
 
+	PtCloud getPointCloud(void)
+	{
+		auto tranPnt3ToVer3 = [](const omesh::Pnt3& point, const omesh::Pnt3& normal, Vertex3Normal& verTex3)
+		{
+			verTex3.x = point[0];
+			verTex3.y = point[1];
+			verTex3.z = point[2];
+			verTex3.nx = normal[0];
+			verTex3.ny = normal[1];
+			verTex3.nz = normal[2];
+		};
+
+		PtCloud cloud;
+		cloud.resize(points.size());
+		for (int i = 0 ; i < points.size(); i ++)
+		{
+			tranPnt3ToVer3(points[i], normals[i], cloud[i]);
+		}
+		return cloud;
+	}
+
 	PtCloud getTexcoordCloud(void)
 	{
 		auto tranPnt3ToVer3 = [](const omesh::Pnt3& point, const omesh::Pnt3& normal, Vertex3Normal& verTex3)

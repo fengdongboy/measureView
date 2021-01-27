@@ -367,7 +367,7 @@ void data_mem::drawWithProgram(QOpenGLShaderProgram *program)
         // Draw cube geometry using indices from VBO 1
         //glDrawElements(GL_TRIANGLE_STRIP,/* 34*/4, GL_UNSIGNED_SHORT, 0);
 		glDrawArrays(GL_TRIANGLES, 0, pointSize);
-		glDrawArrays(GL_POINTS, 0, pointSize);
+
     }
 	else if (drawType == ePoints)
 	{

@@ -1,10 +1,12 @@
 #include "MeasureDataView.h"
 
 #include "ObjReadWrite.h"
+#include "FileExportManager.h"
 
 #include <QFileDialog>
 #include <fstream>
 #include <QTableWidgetItem>
+#include <QMessageBox>
 
 typedef float(*EsMeasure_Fun)(std::string filepath, bool gender, std::vector<EsLineData>  & data, float & score, bool ttt);
 
@@ -216,6 +218,13 @@ MeasureDataView::MeasureDataView(QWidget *parent)
 	matral.setY(242 / 255.0f);
 	matral.setZ(242 / 255.0f);
 	ui.widget_scene->setColor(matral, matral, QVector3D());
+
+	QVector<QAction*> actions;
+	actions << ui.action_open << ui.action_export << ui.action_openPorj;
+	foreach (QAction*a, actions)
+	{
+		a->setVisible(false);
+	}
 }
 
 MeasureDataView::~MeasureDataView()
@@ -311,13 +320,44 @@ void MeasureDataView::on_action_export_triggered(void)
 	}
 }
 
+void MeasureDataView::sltRefreshTable(const std::vector<EsLineData>& datas)
+{
+	auto createItem = [=](int index, const QString& txt)
+	{
+		QTableWidgetItem* item = new QTableWidgetItem(txt);
+		item->setFlags(item->flags() & (~Qt::ItemIsEditable));
+		item->setData(Qt::UserRole, index);
+		return item;
+	};
+
+	auto fmakeTree = [=](QTableWidget* w, int i, const EsLineData& data, int start)
+	{
+		int row = w->rowCount();
+		//if (i % 2) row--;
+		//else
+		w->insertRow(row);//增加一行		
+		//row = w->rowCount();
+		w->setItem(row, 0 + start, createItem(i, QString::number(i)));
+		w->setItem(row, 1 + start, createItem(i, QString::fromLocal8Bit(data.name.c_str())));
+		w->setItem(row, 2 + start, createItem(i, QString::number(data.value, 'f', 2)));
+	};
+
+	ui.listWidget_measureDatas->setRowCount(0);
+	for (int i = 0; i < datas.size(); i++)
+	{
+		fmakeTree(ui.listWidget_measureDatas, i, datas[i], 0);	/// 从第四列开始第二个数据
+	}
+}
+
+	
 void MeasureDataView::on_action_openModel_triggered(void)
 {
-	QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
+QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
 		"",
-		tr("datas (*.obj);; txt (*.stl)"));
+		tr("obj (*.obj);; stl (*.stl)"));
 
 	PtCloud cloud;
+	bool ret = false;
 	if (!fileName.isEmpty())
 	{
 		QString str = fileName.right(3);
@@ -326,14 +366,15 @@ void MeasureDataView::on_action_openModel_triggered(void)
 		{
 			//PtCloud cloud = readObjModel(fileName);
 			//ui.widget_scene->setPtCloud(&cloud, NULL);
-			bool ret = readObjModel(fileName, mScanData);
+			ret = readObjModel(fileName, mScanData);
 			if (ret)
 			{
-				if (mScanData.modelData.hasImg)				
-					cloud = mScanData.modelData.getTexcoordCloud();				
-				else				
-					cloud = mScanData.modelData.getCloud();				
+				if (mScanData.modelData.hasImg)
+					cloud = mScanData.modelData.getTexcoordCloud();
+				else
+					cloud = mScanData.modelData.getCloud();
 			}
+			ui.widget_scene->clear();
 			ui.widget_scene->setModel(&cloud, mScanData.modelData.img, mScanData.modelData.hasImg);
 		}
 		else if (str == "stl")
@@ -341,13 +382,41 @@ void MeasureDataView::on_action_openModel_triggered(void)
 			//PtCloud cloud = readPoissonStl(fileName);
 			//ui.widget_scene->setPtCloud(&cloud, NULL);
 
-			bool ret = readStlModel(fileName, mScanData);
+			ret = readStlModel(fileName, mScanData);
 			if (ret)
 			{
 				cloud = mScanData.modelData.getCloud();
+				ui.widget_scene->clear();
 				ui.widget_scene->setModel(&cloud, mScanData.modelData.img, false);
 			}
 		}
+
+		float score = 0;
+		bool ret1 = readEslineDatas(mScanData.mLineData, score, fileName + ".data");
+		if (ret1)
+		{
+			sltRefreshTable(mScanData.mLineData);
+			
+			for (int i = 0; i < mScanData.mLineData.size(); i++)
+			{
+				cloud.clear();
+				lineData2Ptcloud(mScanData.mLineData[i], cloud);
+
+				ui.widget_scene->addLineData(&cloud);
+			}
+		}
+		str = QStringLiteral("导入模型");
+		if (ret)
+			str += QStringLiteral("成功");
+		else str += QStringLiteral("失败");
+		str += "\n";
+		str += QStringLiteral("导入数据");
+		if (ret1)
+			str += QStringLiteral("成功");
+		else
+			str += QStringLiteral("失败");
+		
+		QMessageBox::warning(this, QStringLiteral("注意"), str);
 	}
 }
 
@@ -404,7 +473,42 @@ void MeasureDataView::on_action_openPorj_triggered(void)
 
 void MeasureDataView::on_action_exportModel_triggered(void)
 {
+	//// *.asc、*.stl、*.xyz、*.obj
+	static QString last;
+	/// 导出模型
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Open File"),
+		last,
+		tr("asc(*.asc);;stl(*.stl);;xyz(*.xyz);;obj(*.obj);;models (*.asc *.stl *.xyz *.obj)"));
+	if (fileName.isEmpty())
+		return;
+	last = fileName;
+	bool ret = false;
+	if (mScanData.load)
+		ret = FileExportManager::getFileExportManager()->saveModel(fileName, mScanData.modelData);
+	if (ret == false)
+		QMessageBox::warning(this, QStringLiteral("注意"), QStringLiteral("导出失败"));
+	else
+		QMessageBox::warning(this, QStringLiteral("注意"), QStringLiteral("导出成功"));
+}
 
+void MeasureDataView::on_comboBox_viewSelect_currentIndexChanged(int index)
+{
+	float angle = 0;
+	QQuaternion q;
+
+	switch (index)
+	{
+	case 0:	/// 左
+		q = QQuaternion::fromAxisAndAngle(0.0, 1.0, 0.0, -90);
+		ui.widget_scene->viewByQQuaternion(q);
+		break;
+	case 1:	/// 右
+		ui.widget_scene->viewLeft();
+		break;
+	case 2:	/// 复位
+		ui.widget_scene->viewReset();
+		break;
+	}
 }
 
 bool MeasureDataView::readSTLFile(const char *filename, std::vector<omesh::Pnt3>& vtx, std::vector<omesh::Pnt3>& normals, std::vector<omesh::TriVtx>& tris, int format /*= 0*/)
