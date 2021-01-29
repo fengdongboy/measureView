@@ -63,6 +63,10 @@ void glview_widget::setBox(omesh::Bbox& box)
 	pt3_g = cent;
 
 	scal_g = 1.0 / dis;
+	if (dis==0)
+	{
+		scal_g = 1.0;
+	}
 	scal_g *= 2;
 	setProperty("scal_g", scal_g);
 	float sc = PTVIEW_SCALL / dis;// (15 / dis);
@@ -379,6 +383,16 @@ void glview_widget::mousePressEvent(QMouseEvent *e)
 void glview_widget::mouseReleaseEvent(QMouseEvent *e)
 {
     QOpenGLWidget::mouseReleaseEvent(e);
+
+	mRenderPoint.addPoint(e->pos(), projection, width(), height());
+
+	//for (auto it = mRenderPoint.clouds.begin(); it != mRenderPoint.clouds.end(); it++)
+	//{
+	//	mBox.add(it->x, it->y, it->z);
+	//}
+
+	//setBox(mBox);
+	update();
     return;
 
 }
@@ -646,6 +660,8 @@ void glview_widget::paintGL()
     programPtcloud.setUniformValue("uNormalRotation", normalRot);
     programPtcloud.setUniformValue("uModelViewProjection",projection*modelview /*projection * modelview*/);
 
+	mRenderPoint.setTranst(projection*modelview);
+
     programPtcloud.setUniformValue("uLightPosition", uLightPosition);
     programPtcloud.setUniformValue("uLightAmbient", uLightAmbient);
     programPtcloud.setUniformValue("uLightDiffuse", uLightDiffuse);
@@ -655,12 +671,6 @@ void glview_widget::paintGL()
     programPtcloud.setUniformValue("uMaterialDiffuse", uMaterialDiffuse);
     programPtcloud.setUniformValue("uMaterialSpecular", uMaterialSpecular);
     programPtcloud.setUniformValue("uShininess", uShininess);
-
-
-
-
-	
-
 
 	programTexture.bind();
 	QMatrix4x4 mvMat;
@@ -677,6 +687,8 @@ void glview_widget::paintGL()
 
 	programTexture.setUniformValue("texture", 0);
 	renderModel();
+
+	mRenderPoint.draw(&programPtcloud);
 #else
 #endif
 }
@@ -862,3 +874,42 @@ void glview_widget::initShaders()
 //! [4]
 
 
+void RenderPoint::addPoint(const QPoint& point, const QMatrix4x4& projection, int w, int h)
+{
+	if (points == NULL)
+		points = new data_mem(ePoints);
+
+	float x = point.x() * 2 / float(w) - 1;
+	float y = point.y() * 2 / float(h) - 1;
+	y = -y;
+	QVector3D p;
+	p.setX(x); p.setY(y); p.setZ(0);
+
+	QVector3D o = transtMatrix.inverted()*p;
+	clouds.push_back(Vertex3Normal(o.x(), o.y(), o.z(), 0, 0, 0));
+
+	points->ptCloudDateUpdate(&clouds);
+
+	if (clouds.size()>= 2)
+	{
+		if (line == NULL)
+		{
+			line = new data_mem(eLineData);
+		}
+		line->ptCloudDateUpdate(&clouds);
+	}
+}
+
+void RenderPoint::draw(QOpenGLShaderProgram *program)
+{
+	if (points)
+	{
+		program->bind();
+		points->drawWithProgramPoints(program);
+	}
+	if (line)
+	{
+		program->bind();
+		line->drawWithProgram(program);
+	}
+}

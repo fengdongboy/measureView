@@ -39,6 +39,26 @@ struct RenderModel
 	RenderModel():type(0),ptCloudMem(NULL),img_texture(NULL){}
 };
 
+struct RenderPoint
+{
+	data_mem *points;
+	data_mem *line;
+
+	PtCloud clouds;
+	RenderPoint():points(NULL),line(NULL){}
+
+	void addPoint(const QPoint& point, const QMatrix4x4& projection,int w, int h);
+
+	void draw(QOpenGLShaderProgram *program);
+
+	void setTranst(const QMatrix4x4& m)
+	{
+		transtMatrix = m;
+	}
+
+	QMatrix4x4 transtMatrix;
+};
+
 
 //本模块最好能承担显示二维图，三维图，线条，面，可重入释放，可以多个界面并存的特点。
 //class PtCloud;
@@ -153,6 +173,8 @@ private:
 
 	/// 渲染的模型
 	RenderModel mRenderModel;
+
+	RenderPoint mRenderPoint;
 
 #endif
 };
