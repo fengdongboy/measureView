@@ -37,14 +37,23 @@
     <ClCompile Include="FileExportManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MeasureDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="MeasureDataView.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="MeasureDialog.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="MeasureDataView.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="MeasureDialog.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>

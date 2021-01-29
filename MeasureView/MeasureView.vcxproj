@@ -59,7 +59,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
-      <AdditionalIncludeDirectories>..\common;glview_widget;$(Qt_INCLUDEPATH_);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\common;glview_widget;$(Qt_INCLUDEPATH_);.\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -75,7 +75,7 @@
       <DebugInformationFormat />
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
-      <AdditionalIncludeDirectories>..\common;glview_widget;$(Qt_INCLUDEPATH_);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\common;glview_widget;$(Qt_INCLUDEPATH_);.\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
@@ -90,6 +90,7 @@
     <ClCompile Include="FileExportManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MeasureDataView.cpp" />
+    <ClCompile Include="MeasureDialog.cpp" />
     <ClCompile Include="ObjReadWrite.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -97,9 +98,11 @@
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="MeasureDataView.ui" />
+    <QtUic Include="MeasureDialog.ui" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FileExportManager.h" />
+    <QtMoc Include="MeasureDialog.h" />
     <ClInclude Include="ObjReadWrite.h" />
     <ClInclude Include="types.h" />
   </ItemGroup>

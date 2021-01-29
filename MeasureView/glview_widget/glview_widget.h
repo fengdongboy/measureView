@@ -47,7 +47,7 @@ struct RenderPoint
 	PtCloud clouds;
 	RenderPoint():points(NULL),line(NULL){}
 
-	void addPoint(const QPoint& point, const QMatrix4x4& projection,int w, int h);
+	QVector3D addPoint(const QPoint& point, int w, int h);
 
 	void draw(QOpenGLShaderProgram *program);
 
@@ -92,6 +92,13 @@ public:
 	void setSelectLines(const std::vector<int>& indexs);
 
 	void renderModel(void);
+
+
+	
+
+Q_SIGNALS:
+	void sigCapturePoints(const QVector3D& point);
+
 public slots:
     //below no scal work
     void viewFront();
@@ -103,6 +110,8 @@ public slots:
 	void viewReset();
 	void setCoordinateVisible(bool visible = true);
 	void viewByQQuaternion(const QQuaternion& qqua);
+
+	void setMeasure(bool b);
 
 protected:
     void mousePressEvent(QMouseEvent *e) override;
@@ -175,6 +184,8 @@ private:
 	RenderModel mRenderModel;
 
 	RenderPoint mRenderPoint;
+
+	bool mMeasureEnable;
 
 #endif
 };

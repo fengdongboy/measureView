@@ -52,6 +52,13 @@
            </item>
           </widget>
          </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_measure">
+           <property name="text">
+            <string>测量</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
@@ -162,6 +169,11 @@
   <action name="action_exportModel">
    <property name="text">
     <string>导出模型</string>
+   </property>
+  </action>
+  <action name="actionCe">
+   <property name="text">
+    <string>ce</string>
    </property>
   </action>
  </widget>

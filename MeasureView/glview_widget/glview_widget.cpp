@@ -9,9 +9,73 @@ using namespace std;
 //using namespace trimesh;
 using namespace omesh;
 
+// Determine whether a ray intersect with a triangle
+// Parameters
+// orig: origin of the ray
+// dir: direction of the ray
+// v0, v1, v2: vertices of triangle
+// t(out): weight of the intersection for the ray
+// u(out), v(out): barycentric coordinate of intersection
+
+bool IntersectTriangle(const QVector3D& orig, const QVector3D& dir,
+	QVector3D& v0, QVector3D& v1, QVector3D& v2,
+	float* t, float* u, float* v)
+{
+	// E1
+	QVector3D E1 = v1 - v0;
+
+	// E2
+	QVector3D E2 = v2 - v0;
+
+	// P
+	QVector3D P = dir.Cross(E2);
+
+	// determinant
+	float det = E1.Dot(P);
+
+	// keep det > 0, modify T accordingly
+	QVector3D T;
+	if (det > 0)
+	{
+		T = orig - v0;
+	}
+	else
+	{
+		T = v0 - orig;
+		det = -det;
+	}
+
+	// If determinant is near zero, ray lies in plane of triangle
+	if (det < 0.0001f)
+		return false;
+
+	// Calculate u and make sure u <= 1
+	*u = T.Dot(P);
+	if (*u < 0.0f || *u > det)
+		return false;
+
+	// Q
+	QVector3D Q = T.Cross(E1);
+
+	// Calculate v and make sure u + v <= 1
+	*v = dir.Dot(Q);
+	if (*v < 0.0f || *u + *v > det)
+		return false;
+
+	// Calculate t, scale parameters, ray intersects triangle
+	*t = E2.Dot(Q);
+
+	float fInvDet = 1.0f / det;
+	*t *= fInvDet;
+	*u *= fInvDet;
+	*v *= fInvDet;
+
+	return true;
+}
+
 
 glview_widget::glview_widget(QWidget *parent) :
-     QOpenGLWidget(parent),mCoodinateVisible(false)
+     QOpenGLWidget(parent),mCoodinateVisible(false), mMeasureEnable(false)
 {
 
         //光照设置
@@ -299,6 +363,11 @@ void glview_widget::renderModel(void)
 
 }
 
+void glview_widget::setMeasure(bool b)
+{
+	mMeasureEnable = b;
+}
+
 void glview_widget::viewFront() {
 
     rotation=QQuaternion();
@@ -384,7 +453,11 @@ void glview_widget::mouseReleaseEvent(QMouseEvent *e)
 {
     QOpenGLWidget::mouseReleaseEvent(e);
 
-	mRenderPoint.addPoint(e->pos(), projection, width(), height());
+	if (mMeasureEnable)
+	{
+		QVector3D p = mRenderPoint.addPoint(e->pos(), width(), height());
+		emit sigCapturePoints(p);
+	}
 
 	//for (auto it = mRenderPoint.clouds.begin(); it != mRenderPoint.clouds.end(); it++)
 	//{
@@ -688,6 +761,7 @@ void glview_widget::paintGL()
 	programTexture.setUniformValue("texture", 0);
 	renderModel();
 
+	if (mMeasureEnable)
 	mRenderPoint.draw(&programPtcloud);
 #else
 #endif
@@ -874,7 +948,7 @@ void glview_widget::initShaders()
 //! [4]
 
 
-void RenderPoint::addPoint(const QPoint& point, const QMatrix4x4& projection, int w, int h)
+QVector3D RenderPoint::addPoint(const QPoint& point, int w, int h)
 {
 	if (points == NULL)
 		points = new data_mem(ePoints);
@@ -898,6 +972,7 @@ void RenderPoint::addPoint(const QPoint& point, const QMatrix4x4& projection, in
 		}
 		line->ptCloudDateUpdate(&clouds);
 	}
+	return o;
 }
 
 void RenderPoint::draw(QOpenGLShaderProgram *program)

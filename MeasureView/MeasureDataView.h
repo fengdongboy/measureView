@@ -14,7 +14,7 @@
 
 
 
-
+class MeasureDialog;
 class MeasureDataView : public QMainWindow
 {
 	Q_OBJECT
@@ -38,6 +38,8 @@ public:
 
 	/// 导出模型
 	void on_action_exportModel_triggered(void);
+
+	void on_pushButton_measure_clicked(void);
 
 	/// 视角选择
 	void on_comboBox_viewSelect_currentIndexChanged(int index);
@@ -63,6 +65,7 @@ private:
 	std::vector<EsLineData> mLineData;
 	ScanData mScanData;
 
+	MeasureDialog* mMeasureDialog;
 	//ScanData mScanData[en_modelScanNull];
 };
 #endif

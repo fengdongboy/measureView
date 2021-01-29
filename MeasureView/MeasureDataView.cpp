@@ -2,6 +2,7 @@
 
 #include "ObjReadWrite.h"
 #include "FileExportManager.h"
+#include "MeasureDialog.h"
 
 #include <QFileDialog>
 #include <fstream>
@@ -210,6 +211,7 @@ bool readEslineDatasTxt(std::vector<EsLineData>& data, float& score, const QStri
 
 MeasureDataView::MeasureDataView(QWidget *parent)
 	: QMainWindow(parent)
+	,mMeasureDialog(NULL)
 {
 	ui.setupUi(this);
 
@@ -219,12 +221,14 @@ MeasureDataView::MeasureDataView(QWidget *parent)
 	matral.setZ(242 / 255.0f);
 	ui.widget_scene->setColor(matral, matral, QVector3D());
 
+	mMeasureDialog = new MeasureDialog;
+	QObject::connect(ui.widget_scene, SIGNAL(sigCapturePoints(const QVector3D&)), mMeasureDialog, SLOT(sltCapturePoints(const QVector3D&)));
+	QObject::connect(mMeasureDialog, SIGNAL(sigVisible(bool)), ui.widget_scene, SLOT(setMeasure(bool)));
+
 	QVector<QAction*> actions;
 	actions << ui.action_open << ui.action_export << ui.action_openPorj;
-	foreach (QAction*a, actions)
-	{
-		a->setVisible(false);
-	}
+	foreach (QAction*a, actions)	
+		a->setVisible(false);	
 }
 
 MeasureDataView::~MeasureDataView()
@@ -489,6 +493,12 @@ void MeasureDataView::on_action_exportModel_triggered(void)
 		QMessageBox::warning(this, QStringLiteral("注意"), QStringLiteral("导出失败"));
 	else
 		QMessageBox::warning(this, QStringLiteral("注意"), QStringLiteral("导出成功"));
+}
+
+void MeasureDataView::on_pushButton_measure_clicked(void)
+{
+	if (mMeasureDialog->isVisible() == false)
+		mMeasureDialog->show();
 }
 
 void MeasureDataView::on_comboBox_viewSelect_currentIndexChanged(int index)
