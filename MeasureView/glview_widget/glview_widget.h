@@ -48,6 +48,7 @@ struct RenderPoint
 	RenderPoint():points(NULL),line(NULL){}
 
 	QVector3D addPoint(const QPoint& point, int w, int h);
+	QVector3D addPoint(const QVector3D& point);
 
 	void draw(QOpenGLShaderProgram *program);
 
@@ -57,6 +58,8 @@ struct RenderPoint
 	}
 
 	QMatrix4x4 transtMatrix;
+
+	PtCloud ModelCloud;
 };
 
 
@@ -125,6 +128,8 @@ protected:
     void resizeGL(int w, int h) override;
     void paintGL() override;
     void initShaders();
+
+	bool clickedPoint(int x, int y, QVector3D& point);
 private:
     QBasicTimer timer;
     QOpenGLShaderProgram programPtcloud;

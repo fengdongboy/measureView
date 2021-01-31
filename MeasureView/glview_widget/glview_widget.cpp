@@ -28,10 +28,12 @@ bool IntersectTriangle(const QVector3D& orig, const QVector3D& dir,
 	QVector3D E2 = v2 - v0;
 
 	// P
-	QVector3D P = dir.Cross(E2);
+	//QVector3D P = dir.Cross(E2);
+	QVector3D P = QVector3D::crossProduct(dir, E2);
 
 	// determinant
-	float det = E1.Dot(P);
+	//float det = E1.Dot(P);
+	float det = QVector3D::dotProduct(E1, P);
 
 	// keep det > 0, modify T accordingly
 	QVector3D T;
@@ -50,20 +52,24 @@ bool IntersectTriangle(const QVector3D& orig, const QVector3D& dir,
 		return false;
 
 	// Calculate u and make sure u <= 1
-	*u = T.Dot(P);
+	//*u = T.Dot(P);
+	*u= QVector3D::dotProduct(T, P);
 	if (*u < 0.0f || *u > det)
 		return false;
 
 	// Q
-	QVector3D Q = T.Cross(E1);
+	//QVector3D Q = T.Cross(E1);
+	QVector3D Q = QVector3D::crossProduct(T, E1);
 
 	// Calculate v and make sure u + v <= 1
-	*v = dir.Dot(Q);
+	//*v = dir.Dot(Q);
+	*v = QVector3D::dotProduct(dir, Q);
 	if (*v < 0.0f || *u + *v > det)
 		return false;
 
 	// Calculate t, scale parameters, ray intersects triangle
-	*t = E2.Dot(Q);
+	//*t = E2.Dot(Q);
+	*t = QVector3D::dotProduct(E2, Q);
 
 	float fInvDet = 1.0f / det;
 	*t *= fInvDet;
@@ -283,6 +289,7 @@ void glview_widget::setModel( PtCloud* cloud, const QImage& img, bool hasImg /*=
 
 	textureOpeMem->ptCloudDateUpdate(cloud);
 	mRenderModel.type = en_renderFace;
+	mRenderPoint.ModelCloud = *cloud;
 
 	if (hasImg)
 	{
@@ -455,7 +462,10 @@ void glview_widget::mouseReleaseEvent(QMouseEvent *e)
 
 	if (mMeasureEnable)
 	{
-		QVector3D p = mRenderPoint.addPoint(e->pos(), width(), height());
+		//QVector3D p = mRenderPoint.addPoint(e->pos(), width(), height());
+		QVector3D p;
+		bool b = clickedPoint(e->pos().x(), e->pos().y(), p);
+		if (b)
 		emit sigCapturePoints(p);
 	}
 
@@ -942,6 +952,54 @@ void glview_widget::initShaders()
      }
 }
 
+bool glview_widget::clickedPoint(int x1, int y1, QVector3D& outp)
+{
+	float x = x1 * 2 / float(width()) - 1;
+	float y = y1 * 2 / float(height()) - 1;
+	y = -y;
+	QVector3D p;
+	p.setX(x); p.setY(y); p.setZ(0);
+
+	QVector3D o = mRenderPoint.transtMatrix.inverted()*p;
+
+	QVector3D dir = QVector3D(0, 0, 0) - o;
+
+	//bool IntersectTriangle(const QVector3D& orig, const QVector3D& dir,
+	//	QVector3D& v0, QVector3D& v1, QVector3D& v2,
+	//	float* t, float* u, float* v)
+
+	QVector3D out;
+	bool b = false;
+	float t = 0, u = 0, v=0;
+	QVector<float> list;
+	for (int i = 0; i < mRenderPoint.ModelCloud.size(); i+=3)
+	{
+		QVector3D p1 = QVector3D(mRenderPoint.ModelCloud[i].x, mRenderPoint.ModelCloud[i].y, mRenderPoint.ModelCloud[i].z);
+		QVector3D p2 = QVector3D(mRenderPoint.ModelCloud[i+1].x, mRenderPoint.ModelCloud[i+1].y, mRenderPoint.ModelCloud[i+1].z);
+		QVector3D p3 = QVector3D(mRenderPoint.ModelCloud[i + 2].x, mRenderPoint.ModelCloud[i + 2].y, mRenderPoint.ModelCloud[i + 2].z);
+		b = IntersectTriangle(o, dir, p1, p2, p3, &t, &u , &v);
+		if (b)
+			list.push_back(t);
+	}
+	float l = 1000;
+	for (int i = 0; i < list.size(); i++)
+	{
+		if (l>list[0])
+		{
+			l = list[0];
+		}
+	}
+	if (l < 1000)
+	{
+		QVector3D tempPoint = o + l * dir;
+		mRenderPoint.addPoint(tempPoint);
+		outp = tempPoint;
+		return true;
+	}
+	return false;
+	//bool b = IntersectTriangle(o, dir, );
+}
+
 
 //! [3]
 
@@ -973,6 +1031,25 @@ QVector3D RenderPoint::addPoint(const QPoint& point, int w, int h)
 		line->ptCloudDateUpdate(&clouds);
 	}
 	return o;
+}
+
+QVector3D RenderPoint::addPoint(const QVector3D & point)
+{
+	if (points == NULL)
+		points = new data_mem(ePoints);
+	clouds.push_back(Vertex3Normal(point.x(), point.y(), point.z(), 0, 0, 0));
+
+	points->ptCloudDateUpdate(&clouds);
+
+	if (clouds.size() >= 2)
+	{
+		if (line == NULL)
+		{
+			line = new data_mem(eLineData);
+		}
+		line->ptCloudDateUpdate(&clouds);
+	}
+	return point;
 }
 
 void RenderPoint::draw(QOpenGLShaderProgram *program)
