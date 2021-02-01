@@ -48,7 +48,10 @@ void MeasureDialog::on_listWidget_itemClicked(QListWidgetItem *item)
 		QString str2 = QString("%1 %2 %3").arg(mPointList[n].point2.x()).arg(mPointList[n].point2.y()).arg(mPointList[n].point2.z());
 		ui.lineEdit_point2->setText(str2);
 		ui.lineEdit_value->setText(QString::number(mPointList[n].value));
+
+		emit sigVisibleLine(n);
 	}
+
 }
 
 void MeasureDialog::closeEvent(QCloseEvent *event)

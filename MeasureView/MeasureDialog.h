@@ -27,6 +27,7 @@ public:
 
 	Q_SIGNALS:
 	void sigVisible(bool);
+	void sigVisibleLine(int);
 
 protected:
 	void closeEvent(QCloseEvent *event);

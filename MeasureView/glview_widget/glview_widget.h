@@ -44,13 +44,41 @@ struct RenderPoint
 	data_mem *points;
 	data_mem *line;
 
+	std::vector<bool> visibles;
+	std::vector<data_mem*> lineDatas;
+
 	PtCloud clouds;
 	RenderPoint():points(NULL),line(NULL){}
+	~RenderPoint()
+	{
+		if (points)
+		{
+			delete points;
+		}
+	}
 
 	QVector3D addPoint(const QPoint& point, int w, int h);
 	QVector3D addPoint(const QVector3D& point);
 
 	void draw(QOpenGLShaderProgram *program);
+	void setVisible(int index = -1)
+	{
+		for (int i = 0; i < lineDatas.size(); i++)
+		{
+			if (index == -1)
+				visibles[i] = true;
+			else visibles[i] = false;
+		}
+		if (index >= 0 && index<visibles.size())
+		{
+			visibles[index] = true;
+		}
+	}
+	void hide(void)
+	{
+		for (int i = 0; i < lineDatas.size(); i++)
+			visibles[i] = false;
+	}
 
 	void setTranst(const QMatrix4x4& m)
 	{
@@ -58,7 +86,6 @@ struct RenderPoint
 	}
 
 	QMatrix4x4 transtMatrix;
-
 	PtCloud ModelCloud;
 };
 
@@ -115,6 +142,10 @@ public slots:
 	void viewByQQuaternion(const QQuaternion& qqua);
 
 	void setMeasure(bool b);
+
+	void setLineVisible(int index);
+
+	void hideLine();
 
 protected:
     void mousePressEvent(QMouseEvent *e) override;

@@ -370,6 +370,18 @@ void glview_widget::renderModel(void)
 
 }
 
+void glview_widget::setLineVisible(int index)
+{
+	mRenderPoint.setVisible(index);
+	update();
+}
+
+void glview_widget::hideLine()
+{
+	mRenderPoint.hide();
+	update();
+}
+
 void glview_widget::setMeasure(bool b)
 {
 	mMeasureEnable = b;
@@ -1051,6 +1063,17 @@ QVector3D RenderPoint::addPoint(const QVector3D & point)
 		}
 		line->ptCloudDateUpdate(&clouds);
 	}
+
+	if (clouds.size() %2 == 0)
+	{
+		data_mem* l = new data_mem(eLineData);
+		PtCloud c;
+		c.push_back(clouds[clouds.size() - 2]);
+		c.push_back(clouds[clouds.size() - 1]);
+		l->ptCloudDateUpdate(&c);
+		lineDatas.push_back(l);
+		visibles.push_back(true);
+	}
 	return point;
 }
 
@@ -1061,9 +1084,16 @@ void RenderPoint::draw(QOpenGLShaderProgram *program)
 		program->bind();
 		points->drawWithProgramPoints(program);
 	}
-	if (line)
+	//if (line)
+	//{
+	//	program->bind();
+	//	line->drawWithProgram(program);
+	//}
+	for (int i = 0; i < visibles.size(); i ++)
 	{
-		program->bind();
-		line->drawWithProgram(program);
+		if (visibles[i])
+		{
+			lineDatas[i]->drawWithProgram(program);
+		}
 	}
 }

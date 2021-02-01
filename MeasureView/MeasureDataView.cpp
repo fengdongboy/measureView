@@ -224,6 +224,13 @@ MeasureDataView::MeasureDataView(QWidget *parent)
 	mMeasureDialog = new MeasureDialog;
 	QObject::connect(ui.widget_scene, SIGNAL(sigCapturePoints(const QVector3D&)), mMeasureDialog, SLOT(sltCapturePoints(const QVector3D&)));
 	QObject::connect(mMeasureDialog, SIGNAL(sigVisible(bool)), ui.widget_scene, SLOT(setMeasure(bool)));
+	QObject::connect(mMeasureDialog, SIGNAL(sigVisibleLine(int)), ui.widget_scene, SLOT(setLineVisible(int)));
+	QObject::connect(mMeasureDialog, &MeasureDialog::sigVisible, [=](bool b) {if (b)
+	{
+		ui.widget_scene->setLineVisible(-1);
+	}
+	else ui.widget_scene->hideLine();
+	});
 
 	QVector<QAction*> actions;
 	actions << ui.action_open << ui.action_export << ui.action_openPorj;
