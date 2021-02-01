@@ -962,7 +962,9 @@ bool glview_widget::clickedPoint(int x1, int y1, QVector3D& outp)
 
 	QVector3D o = mRenderPoint.transtMatrix.inverted()*p;
 
-	QVector3D dir = QVector3D(0, 0, 0) - o;
+	p.setZ(-100);
+	QVector3D o1 = mRenderPoint.transtMatrix.inverted()*p;
+	QVector3D dir = o1 - o;
 
 	//bool IntersectTriangle(const QVector3D& orig, const QVector3D& dir,
 	//	QVector3D& v0, QVector3D& v1, QVector3D& v2,
@@ -981,15 +983,15 @@ bool glview_widget::clickedPoint(int x1, int y1, QVector3D& outp)
 		if (b)
 			list.push_back(t);
 	}
-	float l = 1000;
+	float l = -1000;
 	for (int i = 0; i < list.size(); i++)
 	{
-		if (l>list[0])
+		if (l<list[i])
 		{
-			l = list[0];
+			l = list[i];
 		}
 	}
-	if (l < 1000)
+	if (l > -1000)
 	{
 		QVector3D tempPoint = o + l * dir;
 		mRenderPoint.addPoint(tempPoint);
